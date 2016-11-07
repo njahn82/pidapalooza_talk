@@ -1,0 +1,74 @@
+Using DOIs to assess the institutional support for open access publication fees
+========================================================
+author: Najko Jahn (SUB Göttingen, Germany)
+date: 10th November 2016
+autosize: true
+
+Agenda
+========================================================
+
+- **General background**
+-- Limitations of the study of spending on open access publication fees
+- **Methods** 
+  --Crowdsourcing spending data and using Crossref to obtain metadata about open access journal articles
+- **Results**
+  -- Publication fee spending in Germany by publisher and journal
+- **Discussion**
+ -- Benefits and limits using Crossref
+- **Open questions**
+
+Spending by publisher 
+========================================================
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=7.5}
+my_apc <- jsonlite::stream_in(file("data/cr-apc-all.json"), verbose = FALSE)
+
+# data cleaning
+library(dplyr)
+## remove Bielefelds Zero value
+my_apc <- dplyr::filter(my_apc, euro > 0)
+# remove intech book chapters
+my_apc <- dplyr::filter(my_apc, !is.na(journal_full_title))
+# remove Austrian FWF data
+my_apc <- dplyr::filter(my_apc, !institution == "FWF - Austrian Science Fund")
+# remove data from 2016
+my_apc <- dplyr::filter(my_apc, !period == "2016")
+
+  
+my_apc$publisher <- factor(my_apc$publisher, 
+                          levels =  c(rownames(data.frame(rev(sort(tapply(my_apc$euro, list(my_apc$publisher), sum)))))))
+
+levels(my_apc$publisher)[6:length(levels(my_apc$publisher))] <- paste("Andere (n =", length(unique(my_apc$publisher)) - 5, ")", sep="")
+
+my.df <- aggregate(my_apc$euro, list(publisher = my_apc$publisher, period = my_apc$period), sum)
+
+my.df$publisher <- factor(my.df$publisher, levels = rev(levels(my.df$publisher)))
+
+my.df <- filter(my.df, period > 2010)
+
+### Plot
+require(ggplot2)
+require(scales)
+## http://www.noamross.net/blog/2013/11/20/formatting-plots-for-pubs.html
+science_theme = theme(panel.grid.major = element_line(size = 0.5, color = "grey"), 
+                      axis.line.x = element_line(size = 0.7, color = "black"),
+                      axis.line.y = element_line(size = 0.7, color = "black"),
+                      text = element_text(size = 14))
+
+q_publisher <- ggplot(my.df, aes(factor(period), x, fill= publisher, group = publisher)) + 
+  geom_area(position="stack", color = "black") + 
+  guides(fill = guide_legend(reverse=TRUE)) +
+  scale_fill_manual("Verlag", values = alpha(c("#bdc3c7", "#91bfdb", "#2ecc71", "#e5d8bd", "#2980b9", "#f39c12"), 0.75)) + 
+  scale_y_continuous(labels=format_format(big.mark = ",", scientific = FALSE), limit = c(0,4500000)) + 
+  xlab("Year paid") + ylab("Spending in Euro") + theme_bw() + science_theme
+
+q_publisher
+ggsave(q_publisher, "test.pdf", dpi = 300)
+```
+
+Slide With Plot
+========================================================
+
+```{r, echo=FALSE}
+plot(cars)
+```
