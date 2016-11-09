@@ -50,7 +50,7 @@ Open Data to Open Access Publication Fees
 
 Austrian, German and UK initatives have started to collect and share publication fee expenditure in 2014. 
 
-**Metadata Curation efforts**
+**Metadata curation efforts**
 
 - Thorough coverage of persistent IDs, especially DOI, but also PMID, along with admisntrative information
 - To avoid confusion about naming of journals and publishers German Open APC initiative uses self-reported DOIs to gather bibliographic metadata from Crossref
@@ -59,7 +59,7 @@ Austrian, German and UK initatives have started to collect and share publication
 Parsing Crossref TDM-XML
 =======================================================
 
-After requesting the `application/vnd.crossref.unixsd+xml` linking resource, following fields were parsed and merged with the spending data
+After requesting the `application/vnd.crossref.unixsd+xml` linking resource per DOI, following fields were parsed and merged with the spending data
 
 |variable  |description     | node |
 |:--------------|:---------|:-----------------|
@@ -76,6 +76,7 @@ Method used for this talk
 
 - analysed cost data from the Open APC initiative obtained on 7 Nov 2016 that only covers German universities and research institutions
 - retrieved updated bibliographic information from Crossref by the DOIs to reflect ongoing mergers and name changes of publishers and journals
+- extend Open APC metadata profile by adding Crossref `member_id`
 - used the rOpenSci's `rcrossref:.cr_cn()` function to get the TDM-XML resource
 
 <https://github.com/njahn82/pidapalooza_talk>
@@ -118,6 +119,18 @@ ggsave("growth.pdf", growth, dpi = 300, height=4, width=9)
 growth
 
 ```
+
+Cost distribution
+========================================================
+```{r}
+my_apc %>%
+  mutate(is_hybrid = ifelse(.$is_hybrid, "Hybrid OA journals", "Fully OA journals")) %>% 
+  ggplot(aes(factor(period), euro)) +
+  geom_boxplot(outlier.size = 0.5) +
+  xlab("Year") +
+  ylab("Publication fee paid in Euro") +
+  scale_y_continuous(limits = c(0,8000)) + 
+  facet_grid(~is_hybrid)
 
 Indexing coverage in bibliographic databases
 ========================================================
