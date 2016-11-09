@@ -52,8 +52,8 @@ Austrian, German and UK initatives have started to collect and share publication
 
 **Metadata curation efforts**
 
-- Thorough coverage of persistent IDs, especially DOI, but also PMID, along with admisntrative information
-- To avoid confusion about naming of journals and publishers German Open APC initiative uses self-reported DOIs to gather bibliographic metadata from Crossref
+- Thorough coverage of persistent IDs, especially DOI, but also PMID, along with administrative information
+- To avoid confusion about naming of journals and publishers German [Open APC initiative](https://github.com/openapc/openapc-de) uses self-reported DOIs to gather bibliographic metadata from Crossref
 
 
 Parsing Crossref TDM-XML
@@ -79,7 +79,7 @@ Method used for this talk
 - extend Open APC metadata profile by adding Crossref `member_id`
 - used the rOpenSci's `rcrossref:.cr_cn()` function to get the TDM-XML resource
 
-<https://github.com/njahn82/pidapalooza_talk>
+Code and data used: <https://github.com/njahn82/pidapalooza_talk>
 
 Results -- Cumulative growth of the Open APC initiative
 ========================================================
@@ -89,16 +89,7 @@ library(ggplot2)
 library(dplyr)
 library(scales)
 
-my_apc <- jsonlite::stream_in(file("data/cr-apc-euro.json"), verbose = FALSE)
-
-# data cleaning
-library(dplyr)
-## remove Bielefelds Zero value
-my_apc <- dplyr::filter(my_apc, euro > 0)
-# remove intech book chapters
-my_apc <- dplyr::filter(my_apc, !is.na(journal_full_title))
-my_apc <- dplyr::filter(my_apc, !period == "2016")
-
+my_apc <- jsonlite::stream_in(file("data/cr-apc-all.json"), verbose = FALSE)
 apc_time <- my_apc %>%
   group_by(period) %>%
   summarize(articles = n())
@@ -122,51 +113,61 @@ growth
 
 Cost distribution
 ========================================================
-```{r}
-my_apc %>%
-  mutate(is_hybrid = ifelse(.$is_hybrid, "Hybrid OA journals", "Fully OA journals")) %>% 
+```{r, fig.width=12, fig.height=7.5}
+my_apc <- jsonlite::stream_in(file("data/cr-apc-all.json"), verbose = FALSE)
+
+cost_plot <- my_apc %>%
   ggplot(aes(factor(period), euro)) +
   geom_boxplot(outlier.size = 0.5) +
   xlab("Year") +
   ylab("Publication fee paid in Euro") +
   scale_y_continuous(limits = c(0,8000)) + 
-  facet_grid(~is_hybrid)
+  theme_bw() + science_theme
+cost_plot
+ggsave(cost_plot, filename = "cost_distribution.pdf", dpi = 300, height=4, width=9)
+```
 
 Indexing coverage in bibliographic databases
 ========================================================
 
 ```{r, results='asis'}
 library(dplyr)
-my_apc <- jsonlite::stream_in(file("data/cr-apc-euro.json"), verbose = FALSE)
+my_apc <- jsonlite::stream_in(file("data/cr-apc.json"), verbose = FALSE)
 doi_miss <- jsonlite::stream_in(file("data/missing_dois.json"), verbose = FALSE)
 # crossref md
 cr <- my_apc %>% 
-  filter(!doi %in% doi_miss$doi)
+  filter(!doi %in% doi_miss$doi) 
 
 # other data provider as checked by open apc
 ## load apc data from 7 Nov 2016
 apc <- readr::read_csv("https://github.com/OpenAPC/openapc-de/raw/1b024b89b660d0d289a4c24b6d75b923f0665f39/data/apc_de.csv", 
                 col_names = TRUE)
 
-### 0 exclude non German institutions
-non_de <- c("Wellcome Trust", "TU Wien", "Harvard U", "FWF - Austrian Science Fund")
-apc <- filter(apc, !institution %in% non_de)
+### 0. exclude non-german funders, fees paid in 2016, non journal articles
+non_de <- c("Wellcome Trust", "TU Wien", 
+            "Harvard U", "FWF - Austrian Science Fund")
+apc <- dplyr::filter(apc, !institution %in% non_de)
+apc <- dplyr::filter(apc, euro > 0)
+# remove intech book chapters
+apc <- dplyr::filter(apc, !is.na(journal_full_title))
+apc <- dplyr::filter(apc, !period == "2016")
+
 
 pmid <- filter(apc, !is.na(pmid)) %>% nrow()
 pmcid <- filter(apc, !is.na(pmcid)) %>% nrow()
 ut <-  filter(apc, !is.na(ut)) %>% nrow()
 
-table_src <- data_frame(Sources = c("Crossref", "WoS", "PMID", "PMCID"), `Articles indexed` = c(nrow(cr), ut, pmid, pmcid), `Proportion (in %)` = c(nrow(cr), ut, pmid, pmcid) / nrow(my_apc) * 100) 
+table_src <- data_frame(Sources = c("Crossref", "WoS", "PMID", "PMCID"), `Articles indexed` = c(nrow(cr), ut, pmid, pmcid), `Proportion (in %)` = c(nrow(cr), ut, pmid, pmcid) / nrow(apc) * 100) 
 knitr::kable(table_src)
 ```
 
-Participating institutions reported DOIs for `r my_apc %>% filter(!is.na(doi)) %>% nrow()` out of `r nrow(my_apc)` articles to the Open APC initiative. These DOIs were used to retrieve metadata from Crossref, and to check indexing status in the Web of Science (`WOS`) and Europe PMC (`PMID`, `PMCID`).
+Participating institutions reported DOIs for `r apc %>% filter(!is.na(doi)) %>% nrow()` out of `r nrow(apc)` articles to the Open APC initiative. These DOIs were used to retrieve metadata from Crossref, and to check indexing status in the Web of Science (`WOS`) and Europe PMC (`PMID`, `PMCID`).
 
 Spending by publisher
 ========================================================
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=7.5}
-my_apc <- jsonlite::stream_in(file("data/cr-apc-euro.json"), verbose = FALSE)
+my_apc <- jsonlite::stream_in(file("data/cr-apc-all.json"), verbose = FALSE)
 
 # data cleaning
 library(dplyr)
@@ -209,12 +210,29 @@ q_publisher
 ggsave("costs_publisher.pdf", q_publisher, dpi = 300, height=4, width=9)
 ```
 
+Representing Springer Nature by Crossref member ID
+=======================================================
+
+```{r}
+springer_nat <- my_apc %>% 
+  filter(member_id %in% c("297", "339"))
+
+springer <- springer_nat %>% filter(member_id == "297")
+nature <- springer_nat %>% filter(member_id == "339")
+
+articles <- c(nrow(springer), nrow(nature))
+prop_art <- articles / nrow(springer_nat) * 100
+mean_apc <- c(mean(springer$euro), mean(nature$euro))
+sd_apc <- c(sd(springer$euro), sd(nature$euro))
+nats <- data_frame(Member = c("297 (Springer)", "339 (Nature)"), Articles = articles, `Proportion (in %)` = prop_art, `Mean fee (€)`= mean_apc, `SD (€)` = sd_apc)
+knitr::kable(nats)
+```
 
 Spending per journal
 ========================================================
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=7.5}
-my_apc <- jsonlite::stream_in(file("data/cr-apc-euro.json"), verbose = FALSE)
+my_apc <- jsonlite::stream_in(file("data/cr-apc-all.json"), verbose = FALSE)
 
 # data cleaning
 library(dplyr)

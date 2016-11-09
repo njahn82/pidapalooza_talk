@@ -37,8 +37,8 @@ Austrian, German and UK initatives have started to collect and share publication
 
 **Metadata curation efforts**
 
-- Thorough coverage of persistent IDs, especially DOI, but also PMID, along with admisntrative information
-- To avoid confusion about naming of journals and publishers German Open APC initiative uses self-reported DOIs to gather bibliographic metadata from Crossref
+- Thorough coverage of persistent IDs, especially DOI, but also PMID, along with administrative information
+- To avoid confusion about naming of journals and publishers German [Open APC initiative](https://github.com/openapc/openapc-de) uses self-reported DOIs to gather bibliographic metadata from Crossref
 
 
 Parsing Crossref TDM-XML
@@ -64,7 +64,7 @@ Method used for this talk
 - extend Open APC metadata profile by adding Crossref `member_id`
 - used the rOpenSci's `rcrossref:.cr_cn()` function to get the TDM-XML resource
 
-<https://github.com/njahn82/pidapalooza_talk>
+Code and data used: <https://github.com/njahn82/pidapalooza_talk>
 
 Results -- Cumulative growth of the Open APC initiative
 ========================================================
@@ -73,33 +73,39 @@ Results -- Cumulative growth of the Open APC initiative
 
 Cost distribution
 ========================================================
+![plot of chunk unnamed-chunk-3](talk-figure/unnamed-chunk-3-1.png)
+
+Indexing coverage in bibliographic databases
+========================================================
 
 
+|Sources  | Articles indexed| Proportion (in %)|
+|:--------|----------------:|-----------------:|
+|Crossref |             9515|                99|
+|WoS      |             8192|                85|
+|PMID     |             6994|                73|
+|PMCID    |             6675|                69|
+
+Participating institutions reported DOIs for 9,541 out of 9,619 articles to the Open APC initiative. These DOIs were used to retrieve metadata from Crossref, and to check indexing status in the Web of Science (`WOS`) and Europe PMC (`PMID`, `PMCID`).
+
+Spending by publisher
+========================================================
+
+![plot of chunk unnamed-chunk-5](talk-figure/unnamed-chunk-5-1.png)
+
+Representing Springer Nature by Crossref member ID
+=======================================================
 
 
+|Member         | Articles| Proportion (in %)| Mean fee (€)| SD (€)|
+|:--------------|--------:|-----------------:|------------:|------:|
+|297 (Springer) |     2672|              93.4|         1361|    313|
+|339 (Nature)   |      189|               6.6|         1730|    873|
 
+Spending per journal
+========================================================
 
+![plot of chunk unnamed-chunk-7](talk-figure/unnamed-chunk-7-1.png)
 
-
-```
-processing file: talk.Rpres
-
-Attaching package: 'dplyr'
-
-The following objects are masked from 'package:stats':
-
-    filter, lag
-
-The following objects are masked from 'package:base':
-
-    intersect, setdiff, setequal, union
-
-Quitting from lines 126-137 (talk.Rpres) 
-Fehler in parse(text = x, srcfile = src) : 
-  <text>:10:10: unerwartetes Symbol
-9: 
-10: Indexing coverage
-             ^
-Ruft auf: knit ... evaluate -> parse_all -> parse_all.character -> parse
-Ausführung angehalten
-```
+Discussion
+==============================================
