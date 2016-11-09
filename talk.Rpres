@@ -4,24 +4,91 @@ author: Najko Jahn (SUB Göttingen, Germany)
 date: 10th November 2016
 autosize: true
 
+```{r, echo=FALSE}
+knitr::opts_chunk$set(
+  comment = "#>",
+  collapse = TRUE,
+  warning = FALSE,
+  message = FALSE,
+  echo = FALSE)
+options(scipen = 999, digits = 2)
+knitr::knit_hooks$set(inline = function(x) {
+      if(is.numeric(x)){
+          return(prettyNum(x, big.mark=","))
+      }else{
+          return(x)
+       }
+   })
+```
+
 Agenda
 ========================================================
 
 - **General background**
 -- Limitations of the study of spending on open access publication fees
 - **Methods** 
-  --Crowdsourcing spending data and using Crossref to obtain metadata about open access journal articles
+  -- Crowdsourcing spending data and using Crossref to obtain metadata about open access journal articles
 - **Results**
   -- Publication fee spending in Germany by publisher and journal
 - **Discussion**
  -- Benefits and limits using Crossref
 - **Open questions**
 
-Spending by publisher 
+
+General Background
 ========================================================
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=7.5}
-my_apc <- jsonlite::stream_in(file("data/cr-apc-all.json"), verbose = FALSE)
+Increasing relevance of open access publication fees also APCs in academic publishing
+
+However, the study of spending for these charges has been limited for several resaons:
+  - fragmentation of payments across various budgets
+  - lack of transparency about who pays for what and the cost of publishing
+  - fear of "double-dipping" when subscription costs and fees are not offsetted
+
+Open Data to Open Access Publication Fees
+========================================================
+
+Austrian, German and UK initatives have started to collect and share publication fee expenditure in 2014. 
+
+**Metadata Curation efforts**
+
+- Thorough coverage of persistent IDs, especially DOI, but also PMID, along with admisntrative information
+- To avoid confusion about naming of journals and publishers German Open APC initiative uses self-reported DOIs to gather bibliographic metadata from Crossref
+
+
+Parsing Crossref TDM-XML
+=======================================================
+
+After requesting the `application/vnd.crossref.unixsd+xml` linking resource, following fields were parsed and merged with the spending data
+
+|variable  |description     | node |
+|:--------------|:---------|:-----------------|
+|`doi`| Digital Object Identifier | `//ct:doi` |
+|`journal_full_title` |Full Title of Journal  | `//journal_metadata//full_title` |
+|`publisher` |Title of Publisher  | `//crm-item[@name='publisher-name']` |
+|`issn` |International Standard Serial Numbers (collapsed) | `//journal_metadata//issn` |
+|`issn_print` |ISSN print | `//journal_metadata//issn[@media_type='print']` |
+|`issn_electronic`  |ISSN electronic | `//journal_metadata//issn[@media_type='electronic']` |
+|`license_ref`  |License of the article | `//ai:license_ref` |
+
+Method used for this talk
+=======================================================
+
+- analysed cost data from the Open APC initiative obtained on 7 Nov 2016 that only covers German universities and research institutions
+- retrieved updated bibliographic information from Crossref by the DOIs to reflect ongoing mergers and name changes of publishers and journals
+- used the rOpenSci's `rcrossref:.cr_cn()` function to get the TDM-XML resource
+
+<https://github.com/njahn82/pidapalooza_talk>
+
+Results -- Cumulative growth of the Open APC initiative
+========================================================
+
+```{r, fig.width=12, fig.height=7.5}
+library(ggplot2)
+library(dplyr)
+library(scales)
+
+my_apc <- jsonlite::stream_in(file("data/cr-apc-euro.json"), verbose = FALSE)
 
 # data cleaning
 library(dplyr)
@@ -29,16 +96,79 @@ library(dplyr)
 my_apc <- dplyr::filter(my_apc, euro > 0)
 # remove intech book chapters
 my_apc <- dplyr::filter(my_apc, !is.na(journal_full_title))
-# remove Austrian FWF data
-my_apc <- dplyr::filter(my_apc, !institution == "FWF - Austrian Science Fund")
-# remove data from 2016
+my_apc <- dplyr::filter(my_apc, !period == "2016")
+
+apc_time <- my_apc %>%
+  group_by(period) %>%
+  summarize(articles = n())
+
+## http://www.noamross.net/blog/2013/11/20/formatting-plots-for-pubs.html
+science_theme = theme(panel.grid.major = element_line(size = 0.5, color = "grey"), 
+    axis.line.x = element_line(size = 0.7, color = "black"),
+    axis.line.y = element_line(size = 0.7, color = "black"),
+    text = element_text(size = 14))
+growth <- ggplot(apc_time, aes(factor(period), cumsum(articles), group = 1)) +
+  geom_line(stat = "identity", colour = "blue") +
+  geom_point() +
+  xlab("Year") +
+  ylab("OA articles reported\n(cumulative sum)") +
+  scale_y_continuous(limits = c(0,10000)) +
+  theme_bw() + science_theme
+ggsave("growth.pdf", growth, dpi = 300, height=4, width=9)
+growth
+
+```
+
+Indexing coverage in bibliographic databases
+========================================================
+
+```{r, results='asis'}
+library(dplyr)
+my_apc <- jsonlite::stream_in(file("data/cr-apc-euro.json"), verbose = FALSE)
+doi_miss <- jsonlite::stream_in(file("data/missing_dois.json"), verbose = FALSE)
+# crossref md
+cr <- my_apc %>% 
+  filter(!doi %in% doi_miss$doi)
+
+# other data provider as checked by open apc
+## load apc data from 7 Nov 2016
+apc <- readr::read_csv("https://github.com/OpenAPC/openapc-de/raw/1b024b89b660d0d289a4c24b6d75b923f0665f39/data/apc_de.csv", 
+                col_names = TRUE)
+
+### 0 exclude non German institutions
+non_de <- c("Wellcome Trust", "TU Wien", "Harvard U", "FWF - Austrian Science Fund")
+apc <- filter(apc, !institution %in% non_de)
+
+pmid <- filter(apc, !is.na(pmid)) %>% nrow()
+pmcid <- filter(apc, !is.na(pmcid)) %>% nrow()
+ut <-  filter(apc, !is.na(ut)) %>% nrow()
+
+table_src <- data_frame(Sources = c("Crossref", "WoS", "PMID", "PMCID"), `Articles indexed` = c(nrow(cr), ut, pmid, pmcid), `Proportion (in %)` = c(nrow(cr), ut, pmid, pmcid) / nrow(my_apc) * 100) 
+knitr::kable(table_src)
+```
+
+Participating institutions reported DOIs for `r my_apc %>% filter(!is.na(doi)) %>% nrow()` out of `r nrow(my_apc)` articles to the Open APC initiative. These DOIs were used to retrieve metadata from Crossref, and to check indexing status in the Web of Science (`WOS`) and Europe PMC (`PMID`, `PMCID`).
+
+Spending by publisher
+========================================================
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=7.5}
+my_apc <- jsonlite::stream_in(file("data/cr-apc-euro.json"), verbose = FALSE)
+
+# data cleaning
+library(dplyr)
+## remove Bielefelds Zero value
+my_apc <- dplyr::filter(my_apc, euro > 0)
+# remove intech book chapters
+my_apc <- dplyr::filter(my_apc, !is.na(journal_full_title))
+
 my_apc <- dplyr::filter(my_apc, !period == "2016")
 
   
 my_apc$publisher <- factor(my_apc$publisher, 
                           levels =  c(rownames(data.frame(rev(sort(tapply(my_apc$euro, list(my_apc$publisher), sum)))))))
 
-levels(my_apc$publisher)[6:length(levels(my_apc$publisher))] <- paste("Andere (n =", length(unique(my_apc$publisher)) - 5, ")", sep="")
+levels(my_apc$publisher)[7:length(levels(my_apc$publisher))] <- paste("Others (N =", length(unique(my_apc$publisher)) - 7, ")", sep="")
 
 my.df <- aggregate(my_apc$euro, list(publisher = my_apc$publisher, period = my_apc$period), sum)
 
@@ -58,17 +188,65 @@ science_theme = theme(panel.grid.major = element_line(size = 0.5, color = "grey"
 q_publisher <- ggplot(my.df, aes(factor(period), x, fill= publisher, group = publisher)) + 
   geom_area(position="stack", color = "black") + 
   guides(fill = guide_legend(reverse=TRUE)) +
-  scale_fill_manual("Verlag", values = alpha(c("#bdc3c7", "#91bfdb", "#2ecc71", "#e5d8bd", "#2980b9", "#f39c12"), 0.75)) + 
+  scale_fill_manual("Publisher", values = alpha(c("#bdc3c7", "#fbb4ae", "#2ecc71", "#e5d8bd", "#2980b9", "#a6d854", "#91bfdb", "#f39c12"), 0.75)) + 
   scale_y_continuous(labels=format_format(big.mark = ",", scientific = FALSE), limit = c(0,4500000)) + 
   xlab("Year paid") + ylab("Spending in Euro") + theme_bw() + science_theme
 
 q_publisher
-ggsave(q_publisher, "test.pdf", dpi = 300)
+ggsave("costs_publisher.pdf", q_publisher, dpi = 300, height=4, width=9)
 ```
 
-Slide With Plot
+
+Spending per journal
 ========================================================
 
-```{r, echo=FALSE}
-plot(cars)
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=7.5}
+my_apc <- jsonlite::stream_in(file("data/cr-apc-euro.json"), verbose = FALSE)
+
+# data cleaning
+library(dplyr)
+## remove Bielefelds Zero value
+my_apc <- dplyr::filter(my_apc, euro > 0)
+# remove intech book chapters
+my_apc <- dplyr::filter(my_apc, !is.na(journal_full_title))
+
+# remove data from 2016
+my_apc <- dplyr::filter(my_apc, !period == "2016")
+# fix plos name change in journal titles
+my_apc$journal_full_title <- gsub("PLoS", "PLOS", my_apc$journal_full_title)
+my_apc$journal_full_title <- gsub("Scientific Repor.", "Scientific Reports", my_apc$journal_full_title)
+
+  
+my_apc$journal_full_title <- factor(my_apc$journal_full_title, 
+                          levels =  c(rownames(data.frame(rev(sort(tapply(my_apc$euro, list(my_apc$journal_full_title), sum)))))))
+
+levels(my_apc$journal_full_title)[6:length(levels(my_apc$journal_full_title))] <- paste("Others (N =", length(unique(my_apc$journal_full_title)) - 5, ")", sep="")
+
+my.df <- aggregate(my_apc$euro, list(journal_full_title = my_apc$journal_full_title, period = my_apc$period), sum)
+
+my.df$journal_full_title <- factor(my.df$journal_full_title, levels = rev(levels(my.df$journal_full_title)))
+
+my.df <- filter(my.df, period > 2010)
+
+### Plot
+require(ggplot2)
+require(scales)
+## http://www.noamross.net/blog/2013/11/20/formatting-plots-for-pubs.html
+science_theme = theme(panel.grid.major = element_line(size = 0.5, color = "grey"), 
+                      axis.line.x = element_line(size = 0.7, color = "black"),
+                      axis.line.y = element_line(size = 0.7, color = "black"),
+                      text = element_text(size = 14))
+
+q_publisher <- ggplot(my.df, aes(factor(period), x, fill= journal_full_title, group = journal_full_title)) + 
+  geom_area(position="stack", color = "black") + 
+  guides(fill = guide_legend(reverse=TRUE)) +
+  scale_fill_manual("Journal", values = alpha(c("#bdc3c7", "#91bfdb", "#2ecc71", "#e5d8bd", "#2980b9", "#f39c12"), 0.75)) + 
+  scale_y_continuous(labels=format_format(big.mark = ",", scientific = FALSE), limit = c(0,4500000)) + 
+  xlab("Year paid") + ylab("Spending in Euro") + theme_bw() + science_theme
+
+q_publisher
+ggsave("costs_journal.pdf", q_publisher, dpi = 300, height=4, width=9)
 ```
+
+Discussion
+==============================================

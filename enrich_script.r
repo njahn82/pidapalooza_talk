@@ -8,6 +8,9 @@ apc <- readr::read_csv("https://github.com/OpenAPC/openapc-de/raw/1b024b89b660d0
 apc$doi <- tolower(apc$doi)
 apc$doi <- gsub("dx.doi.org/", "", apc$doi)
 
+### 0 exclude non German institutions
+non_de <- c("Wellcome Trust", "TU Wien", "Harvard U", "FWF - Austrian Science Fund")
+apc <- filter(apc, !institution %in% non_de)
 ### 1. step exclude NA
 apc_doi <- apc[!is.na(apc$doi),]
 
