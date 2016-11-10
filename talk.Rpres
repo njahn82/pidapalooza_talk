@@ -38,9 +38,9 @@ Agenda
 General Background
 ========================================================
 
-Increasing relevance of open access publication fees also APCs in academic publishing
+Increasing relevance of open access publication fees, also APCs, in academic publishing
 
-However, the study of spending for these charges has been limited for several resaons:
+However, the study of publication fee spending has been limited for several reasons:
   - fragmentation of payments across various budgets
   - lack of transparency about who pays for what and the cost of publishing
   - fear of "double-dipping" when subscription costs and fees are not offsetted
@@ -48,7 +48,7 @@ However, the study of spending for these charges has been limited for several re
 Open Data to Open Access Publication Fees
 ========================================================
 
-Austrian, German and UK initatives have started to collect and share publication fee expenditure in 2014. 
+Several Austrian, German and UK initiatives have started to collect and share publication fee expenditure in 2014. 
 
 **Metadata curation efforts**
 
@@ -84,6 +84,12 @@ Code and data used: <https://github.com/njahn82/pidapalooza_talk>
 Results -- Cumulative growth of the Open APC initiative
 ========================================================
 
+```{r}
+my_apc <- jsonlite::stream_in(file("data/cr-apc-all.json"), verbose = FALSE)
+```
+
+`r nrow(my_apc)` centrally supported open access articles shared by `r length(unique(my_apc$institution))` German universities and research organisations
+
 ```{r, fig.width=12, fig.height=7.5}
 library(ggplot2)
 library(dplyr)
@@ -113,6 +119,7 @@ growth
 
 Cost distribution
 ========================================================
+
 ```{r, fig.width=12, fig.height=7.5}
 my_apc <- jsonlite::stream_in(file("data/cr-apc-all.json"), verbose = FALSE)
 
@@ -210,7 +217,7 @@ q_publisher
 ggsave("costs_publisher.pdf", q_publisher, dpi = 300, height=4, width=9)
 ```
 
-Representing Springer Nature by Crossref member ID
+Representing Springer Nature merger by Crossref member ID
 =======================================================
 
 ```{r}
@@ -279,5 +286,59 @@ q_publisher
 ggsave("costs_journal.pdf", q_publisher, dpi = 300, height=4, width=9)
 ```
 
+License information
+=============================================
+
+Top 5 license mentions in Crossref TDM-XML
+
+```{r}
+library(dplyr)
+my_apc <- jsonlite::stream_in(file("data/cr-apc-all.json"), verbose = FALSE)
+cr <- my_apc <- jsonlite::stream_in(file("data/cr-apc.json"), verbose = FALSE)
+
+tt <- my_apc %>% 
+  group_by(license_ref) %>% 
+  summarise(Articles = n()) %>% 
+  mutate(Proportion = Articles / nrow(cr) * 100) %>% 
+  arrange(desc(Articles))
+knitr::kable(tt[1:5,])
+```
+
+
 Discussion
 ==============================================
+
+* Open Access journal articles where German research institutions covered the publication fee are thoroughly covered by Crossref
+
+* Benefits using Crossref metadata services
+  - no manual curation of bibliographic metadata
+  - reliable open APIs and several metadata representations in place
+  - great clients in place, e.g. [rOpenSci's rcrossref](https://github.com/ropensci/rcrossref) by [Scott Chamberlain](https://twitter.com/sckottie)
+  
+* Open questions
+  - How are mergers of publishers and name changes be best represented?
+  - How to motivate publishers to provide more infos to Crossref, especially licence information, at the article level?
+
+Conclusion
+=============================================
+
+- Increasing need to make spending for open access publication fees transparent and to compare these expenditure across various levels
+- Open Access articles where institutions covered publication fees are thoroughly covered in Crossref
+- Re-using Crossref metadata, which publishers provided, extend existing methods to retrieve bibliographic metadata 
+- However, open questions remain about versioning of metadata, especially how to represent mergers, and license coverage
+
+=============================================
+
+## Open APC Initiative
+
+- [https://github.com/OpenAPC/openapc-de](https://github.com/OpenAPC/openapc-de)
+
+Contact: Christoph Broschinski, Dirk Pieper <mailto:openapc@uni-bielefeld.de>
+
+## Recent article 
+
+- Jahn, N., & Tullney, M. (2016). A study of institutional spending on open access publication fees in Germany. PeerJ, 4, e2323. doi:[10.7717/peerj.2323](http://doi.org/10.7717/peerj.2323)
+
+<mailto:najko.jahn@sub.uni-goettingen.de>
+
+[http://twitter.com/najkoja](@najkoja)

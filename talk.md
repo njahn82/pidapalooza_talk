@@ -23,9 +23,9 @@ Agenda
 General Background
 ========================================================
 
-Increasing relevance of open access publication fees also APCs in academic publishing
+Increasing relevance of open access publication fees, also APCs, in academic publishing
 
-However, the study of spending for these charges has been limited for several resaons:
+However, the study of publication fee spending has been limited for several reasons:
   - fragmentation of payments across various budgets
   - lack of transparency about who pays for what and the cost of publishing
   - fear of "double-dipping" when subscription costs and fees are not offsetted
@@ -33,7 +33,7 @@ However, the study of spending for these charges has been limited for several re
 Open Data to Open Access Publication Fees
 ========================================================
 
-Austrian, German and UK initatives have started to collect and share publication fee expenditure in 2014. 
+Several Austrian, German and UK initiatives have started to collect and share publication fee expenditure in 2014. 
 
 **Metadata curation efforts**
 
@@ -69,11 +69,16 @@ Code and data used: <https://github.com/njahn82/pidapalooza_talk>
 Results -- Cumulative growth of the Open APC initiative
 ========================================================
 
-![plot of chunk unnamed-chunk-2](talk-figure/unnamed-chunk-2-1.png)
+
+
+9,619 centrally supported open access articles shared by 36 German universities and research organisations
+
+![plot of chunk unnamed-chunk-3](talk-figure/unnamed-chunk-3-1.png)
 
 Cost distribution
 ========================================================
-![plot of chunk unnamed-chunk-3](talk-figure/unnamed-chunk-3-1.png)
+
+![plot of chunk unnamed-chunk-4](talk-figure/unnamed-chunk-4-1.png)
 
 Indexing coverage in bibliographic databases
 ========================================================
@@ -91,9 +96,9 @@ Participating institutions reported DOIs for 9,541 out of 9,619 articles to the 
 Spending by publisher
 ========================================================
 
-![plot of chunk unnamed-chunk-5](talk-figure/unnamed-chunk-5-1.png)
+![plot of chunk unnamed-chunk-6](talk-figure/unnamed-chunk-6-1.png)
 
-Representing Springer Nature by Crossref member ID
+Representing Springer Nature merger by Crossref member ID
 =======================================================
 
 
@@ -105,7 +110,57 @@ Representing Springer Nature by Crossref member ID
 Spending per journal
 ========================================================
 
-![plot of chunk unnamed-chunk-7](talk-figure/unnamed-chunk-7-1.png)
+![plot of chunk unnamed-chunk-8](talk-figure/unnamed-chunk-8-1.png)
+
+License information
+=============================================
+
+Top 5 license mentions in Crossref TDM-XML
+
+
+|license_ref                                 | Articles| Proportion|
+|:-------------------------------------------|--------:|----------:|
+|NA                                          |     5530|      58.12|
+|http://creativecommons.org/licenses/by/4.0/ |     2240|      23.54|
+|http://www.springer.com/tdm                 |      819|       8.61|
+|http://creativecommons.org/licenses/by/3.0/ |      623|       6.55|
+|http://doi.wiley.com/10.1002/tdm_license_1  |       94|       0.99|
+
 
 Discussion
 ==============================================
+
+* Open Access journal articles where German research institutions covered the publication fee are thoroughly covered by Crossref
+
+* Benefits using Crossref metadata services
+  - no manual curation of bibliographic metadata
+  - reliable open APIs and several metadata representations in place
+  - great clients in place, e.g. [rOpenSci's rcrossref](https://github.com/ropensci/rcrossref) by [Scott Chamberlain](https://twitter.com/sckottie)
+  
+* Open questions
+  - How are mergers of publishers and name changes be best represented?
+  - How to motivate publishers to provide more infos to Crossref, especially licence information, at the article level?
+
+Conclusion
+=============================================
+
+- Increasing need to make spending for open access publication fees transparent and to compare these expenditure across various levels
+- Open Access articles where institutions covered publication fees are thoroughly covered in Crossref
+- Re-using Crossref metadata, which publishers provided, extend existing methods to retrieve bibliographic metadata 
+- However, open questions remain about versioning of metadata, especially how to represent mergers, and license coverage
+
+=============================================
+
+## Open APC Initiative
+
+- [https://github.com/OpenAPC/openapc-de](https://github.com/OpenAPC/openapc-de)
+
+Contact: Christoph Broschinski, Dirk Pieper <mailto:openapc@uni-bielefeld.de>
+
+## Recent article 
+
+- Jahn, N., & Tullney, M. (2016). A study of institutional spending on open access publication fees in Germany. PeerJ, 4, e2323. doi:[10.7717/peerj.2323](http://doi.org/10.7717/peerj.2323)
+
+<mailto:najko.jahn@sub.uni-goettingen.de>
+
+[http://twitter.com/najkoja](@najkoja)
